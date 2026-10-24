@@ -54,6 +54,33 @@ same hands-on validation as this Wayland setup.
 
 ## Install
 
+### Install a release (recommended)
+
+Download the `.deb` asset from [Releases](https://github.com/maurodam/unshaky-linux/releases/latest),
+then install it from your download directory:
+
+```bash
+sudo apt install ./unshaky-linux_0.1.0_all.deb
+```
+
+Replace the version with the downloaded filename. No Git checkout or compilation
+is required. The `all` package contains Python source and supports architectures
+where the declared Ubuntu/Debian dependencies are available. It requires an
+AppIndicator-capable desktop. GNOME's AppIndicator extension is recommended by
+the package; other desktops must provide their own panel integration.
+
+Open **Unshaky Linux** from the applications menu. Log out and back in if the
+panel icon or keyboard access is unavailable. Device access is granted to the
+active local desktop user through `udev` and `uaccess`; installation does not
+need to identify a user or add every account to the keyboard-access group.
+
+If you previously used `install.sh`, quit the app and run `sudo ./uninstall.sh`
+from that checkout **before** installing the package. Reboot to reset the old
+permissions. Settings are preserved; re-enable Start at login if needed. Do not
+mix the source installer/uninstaller with a package-managed installation.
+
+### Install from source
+
 Clone this repository, then run the installer as your normal user through sudo:
 
 ```bash
@@ -118,7 +145,11 @@ exits. Accepted keystrokes are not logged.
 
 ## Update and restart
 
-From your existing checkout:
+For a package installation, download the new `.deb` and install it with
+`sudo apt install ./unshaky-linux_VERSION_all.deb`. Quit and reopen the application
+after the upgrade. Settings and the login preference are preserved.
+
+For a source installation, from your existing checkout:
 
 ```bash
 git pull --ff-only
@@ -171,7 +202,17 @@ Closing the physical device's file descriptor releases the exclusive grab. On a
 normal exit, held virtual keys are released before the virtual keyboard is
 removed. The compositor may take a moment to remove the virtual device.
 
-To uninstall, quit the application first, then run:
+To uninstall a package installation, quit the application and run:
+
+```bash
+sudo apt remove unshaky-linux
+```
+
+Settings and Start at login entries are kept. Disable Start at login before
+removal, or remove `~/.config/autostart/unshaky-linux.desktop` yourself. Reboot to
+reset device permissions. The dedicated group is kept for existing logins.
+
+For a source installation, quit the application first, then run:
 
 ```bash
 sudo ./uninstall.sh
@@ -217,6 +258,36 @@ For hands-on testing, check ordinary typing, intentional double letters,
 held-key repeat, modifiers, pause/resume, reconnect, exit, and a new desktop login.
 Report your distribution, desktop, session type, keyboard, threshold, and the
 observed behavior when opening an issue. Avoid sharing sensitive typed content.
+
+## Building and publishing releases
+
+Build a package locally without root:
+
+```bash
+./scripts/build-deb.sh 0.1.0
+```
+
+This produces `dist/unshaky-linux_0.1.0_all.deb` and a companion `.sha256` file.
+Verify a download with `sha256sum -c unshaky-linux_0.1.0_all.deb.sha256`.
+The version must contain three numbers (`MAJOR.MINOR.PATCH`); the builder also
+accepts a leading `v`.
+
+The Debian release workflow runs tests, builds the package, and checks apt
+installation and removal on Ubuntu 24.04. Pull requests and manual workflow
+runs validate a `0.0.0` package without publishing. Hardware filtering and panel
+integration still require a real desktop session.
+
+To publish, commit and push the release changes first, then tag that commit:
+
+```bash
+git tag -a v0.1.0 -m "Unshaky Linux 0.1.0"
+git push origin v0.1.0
+```
+
+A pushed `v*` tag triggers the workflow. After checks pass, it creates a GitHub
+Release with the `.deb`, checksum, and generated release notes. Use a new version
+for each release. The workflow uses GitHub's built-in token with release write
+permission; no extra secret is required.
 
 ## Credits and license
 

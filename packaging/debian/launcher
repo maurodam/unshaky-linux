@@ -1,0 +1,4 @@
+#!/bin/sh
+cd /opt/unshaky-linux || exit 1
+export PYTHONPATH=/opt/unshaky-linux
+exec /usr/bin/python3 -m unshaky_linux "$@"

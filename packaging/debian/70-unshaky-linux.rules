@@ -1,0 +1,2 @@
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", GROUP="unshaky", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="misc", KERNEL=="uinput", GROUP="unshaky", MODE="0660", TAG+="uaccess", OPTIONS+="static_node=uinput"

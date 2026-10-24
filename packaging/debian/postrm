@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+case "$1" in
+    remove|purge)
+        # Keep the group: existing logins and locally configured users may use it.
+        if [ -d /run/udev ]; then
+            udevadm control --reload-rules || true
+            udevadm trigger --subsystem-match=input || true
+            udevadm trigger --subsystem-match=misc || true
+            udevadm settle || true
+        fi
+        echo 'Quit any running Unshaky Linux instance. Reboot to reset device permissions.'
+        echo 'User settings and Start at login entries have been kept.'
+        ;;
+esac

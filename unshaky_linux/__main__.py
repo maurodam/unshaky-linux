@@ -21,7 +21,7 @@ DEFAULT = {'enabled': True, 'delay_ms': 40, 'keys': {}, 'aggressive': False,
 def desktop_entry():
     return ('[Desktop Entry]\nType=Application\nName=Unshaky Linux\n'
             'Comment=Filter unintended repeated keystrokes\n'
-            'Exec=/usr/local/bin/unshaky-linux\nIcon=input-keyboard\nTerminal=false\n'
+            'Exec=unshaky-linux\nIcon=input-keyboard\nTerminal=false\n'
             'X-GNOME-Autostart-enabled=true\n')
 
 

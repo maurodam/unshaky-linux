@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+case "$1" in
+    configure)
+        getent group unshaky >/dev/null || groupadd --system unshaky
+        # Kernel and udev operations may be unavailable in a chroot/container.
+        if [ -d /run/udev ]; then
+            modprobe uinput || true
+            udevadm control --reload-rules || true
+            udevadm trigger --subsystem-match=input || true
+            udevadm trigger --subsystem-match=misc || true
+            udevadm settle || true
+        fi
+        echo 'Open Unshaky Linux from the applications menu. Restart it after upgrades.'
+        echo 'Log out and back in if device access or the panel icon is unavailable.'
+        ;;
+esac

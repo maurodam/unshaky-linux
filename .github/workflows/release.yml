@@ -1,0 +1,68 @@
+name: Debian release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install test dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3-evdev
+      - name: Check source
+        run: |
+          /usr/bin/python3 -m unittest discover -s tests -v
+          /usr/bin/python3 -m compileall -q unshaky_linux
+          bash -n install.sh uninstall.sh update.sh scripts/build-deb.sh
+          sh -n packaging/debian/postinst packaging/debian/postrm packaging/debian/launcher
+      - name: Build package
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          version=0.0.0
+          if [ "$REF_TYPE" = tag ]; then version="$RELEASE_TAG"; fi
+          ./scripts/build-deb.sh "$version"
+      - name: Verify package installation and removal
+        run: |
+          sudo apt-get install -y ./dist/*.deb
+          test -x /usr/bin/unshaky-linux
+          /usr/bin/python3 -c 'import sys; sys.path.insert(0, "/opt/unshaky-linux"); import unshaky_linux.backend'
+          sudo apt-get remove -y unshaky-linux
+          test ! -e /usr/bin/unshaky-linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debian-package
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: debian-package
+          path: dist
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/* --verify-tag \
+            --title "Unshaky Linux $RELEASE_TAG" --generate-notes \
+            --notes 'Download the .deb asset and install with: sudo apt install ./unshaky-linux_*_all.deb. Ubuntu/Debian desktop with AppIndicator support required. Restart the app after upgrades; log out and back in if the icon or device access is unavailable.'
